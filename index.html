@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Word Puzzle</title>
+    <title>Family Heads Up</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -44,9 +44,9 @@
             gap: 15px;
             width: 100%;
             max-width: 1200px;
-			overflow-y: auto;
-            overflow-x: hidden; /* Prevent horizontal scroll from hover scale */
-            padding: 10px 15px 100px 15px; /* Added side padding for scale room */
+            overflow-x: hidden; /* Prevents horizontal scroll on hover scaling */
+            padding: 15px; /* Room for cards to scale without being clipped */
+            padding-bottom: 50px;
         }
 
         .category-card {
@@ -82,7 +82,6 @@
             font-weight: 900;
         }
 
-        /* Close Button Styling */
         .close-btn {
             background: rgba(255,255,255,0.15);
             border: none;
@@ -97,7 +96,7 @@
             justify-content: center;
             transition: 0.2s;
             line-height: 0;
-            padding-bottom: 4px; /* Optical center for X */
+            padding-bottom: 4px;
         }
         .close-btn:hover { background: var(--danger); }
 
@@ -113,16 +112,22 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            padding: 30px;
+            padding: 20px;
             text-align: center;
+            overflow: hidden;
         }
 
         .card-word {
-            font-size: clamp(2.5rem, 12vw, 8rem);
+            /* Increased minimum font size and adjusted scaling for better multiline appearance */
+            font-size: clamp(3.2rem, 14vw, 7.5rem);
             font-weight: 900;
-            line-height: 1;
+            line-height: 1.1;
             text-transform: uppercase;
-            word-break: break-word;
+            /* Ensure it breaks at spaces naturally */
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
+            max-width: 100%;
         }
 
         .controls {
@@ -178,18 +183,15 @@
 </head>
 <body>
 
-    <!-- MENU SCREEN -->
     <div id="menu-screen" class="screen active">
-        <h1>WORD PUZZLE</h1>
+        <h1>HEADS UP</h1>
         <div class="grid" id="category-grid"></div>
     </div>
 
-    <!-- COUNTDOWN SCREEN -->
     <div id="countdown-screen" class="screen">
         <div id="cd-num">3</div>
     </div>
 
-    <!-- GAME SCREEN -->
     <div id="game-screen" class="screen">
         <div class="game-header">
             <div id="timer" style="color: var(--danger); width: 80px;">60s</div>
@@ -208,7 +210,6 @@
         </div>
     </div>
 
-    <!-- RESULTS SCREEN -->
     <div id="results-screen" class="screen">
         <h1 style="font-size: 3rem; margin: 0;">FINAL SCORE</h1>
         <div class="res-pill" id="final-score">0</div>
@@ -216,7 +217,6 @@
     </div>
 
     <script>
-        // --- SOUND ENGINE ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playTone(freq, type, dur, vol=0.1) {
             const osc = audioCtx.createOscillator();
@@ -236,7 +236,7 @@
         };
 
         // --- DATA ---
-const categories = {
+		const categories = {
             "Canadian Food": { i: "🍟", w: ["Poutine", "Maple Syrup", "BeaverTails", "Ketchup Chips", "Nanaimo Bar", "Coffee Crisp", "Hickory Sticks", "Peameal Bacon", "Tourtière", "Donair", "Butter Tart", "Montreal Bagel", "Saskatoon Berry Pie", "Bannock", "Split Pea Soup", "Digby Chicks", "Lobster Roll", "Pemmican", "Tidbits", "Garlic Fingers", "Tiger Tail Ice Cream", "Jos Louis", "Eat-More", "Big Turk", "Thrills Gum", "Crispy Crunch", "Glosette Raisins", "Haskap Berries", "Wild Blueberries", "Fiddleheads", "Smoked Meat", "Game Meat", "Pacific Salmon", "Arctic Char", "Birch Syrup", "Ice Wine", "Caesar Cocktail", "London Fog", "Spruce Beer", "Red River Cereal", "Kraft Dinner", "Smarties", "Aero", "Maltesers", "Coffee Porter", "B.C. Roll", "California Roll", "Ginger Beef", "Honey Garlic Wings", "Pictou County Pizza", "Moon Mist Ice Cream", "Scrunchions", "Jiggs Dinner", "Figgy Duff", "Touton", "Bakeapple Jam", "Partridgeberry", "Cod Tongues", "Brewis", "Dulse", "Snow Crab", "Spot Prawns", "Nanaimo Bar Cheesecake", "Maple Taffy", "Sugar Shack Pancakes", "Blueberry Grunt", "Flapper Pie", "Pouding Chômeur", "Grand-Pères", "Pets de Sœur", "Cretons", "Rappie Pie", "Chicken Fricot", "Ployes", "Sussex Golden Ginger Ale", "Ganong Chocolates", "Chicken Bones Candy", "Barley Toys", "Ribfest Ribs", "Cow’s Ice Cream", "Beaver Tails Killaloe Sunrise", "Pizzaghetti", "Steamies", "Montreal Smoked Meat Sandwich", "Ontario Peaches", "Okanagan Apples", "Ice Cider", "Maple Fudge", "Moose Milk", "Screech", "Spud Island Chips", "Covered Bridge Chips", "Hard Hard Root Beer", "Clamato", "Canadian Pizza", "Maple Smoked Salmon", "Montreal Steak Spice", "Poutine Rapee", "Swish", "Shmoo Torte", "Honey Dill Sauce", "Kubasa", "Perogies", "Cabbage Rolls", "Borscht"] },
             "Animals": { i: "🦁", w: ["Lion", "Penguin", "Giraffe", "Elephant", "Kangaroo", "Wolf", "Beaver", "Moose", "Tiger", "Zebra", "Hippo", "Rhino", "Cheetah", "Leopard", "Jaguar", "Hyena", "Gorilla", "Chimpanzee", "Orangutan", "Baboon", "Lemur", "Panda", "Koala", "Wombat", "Platypus", "Echidna", "Tasmanian Devil", "Sloth", "Armadillo", "Anteater", "Aardvark", "Meerkat", "Mongoose", "Otter", "Badger", "Raccoon", "Skunk", "Squirrel", "Chipmunk", "Groundhog", "Prairie Dog", "Hedgehog", "Mole", "Bat", "Whale", "Dolphin", "Porpoise", "Seal", "Sea Lion", "Walrus", "Manatee", "Dugong", "Polar Bear", "Grizzly Bear", "Black Bear", "Red Panda", "Arctic Fox", "Fennec Fox", "Coyote", "Jackal", "Camel", "Llama", "Alpaca", "Vicuna", "Guanaco", "Deer", "Elk", "Caribou", "Antelope", "Gazelle", "Impala", "Wildebeest", "Buffalo", "Bison", "Yak", "Mountain Goat", "Bighorn Sheep", "Wild Boar", "Wart Hog", "Tapir", "Okapi", "Capybara", "Guinea Pig", "Hamster", "Gerbil", "Rat", "Mouse", "Rabbit", "Hare", "Opossum", "Sugar Glider", "Wallaby", "Quokka", "Narwhal", "Beluga", "Orca", "Lynx", "Bobcat", "Cougar", "Snow Leopard", "Clouded Leopard", "Serval", "Ocelot", "Caracal"] },
             "Disney": { i: "🏰", w: ["Mickey Mouse", "Elsa", "Simba", "Aladdin", "Cinderella", "Olaf", "Donald Duck", "Buzz Lightyear", "Woody", "Goofy", "Pluto", "Minnie Mouse", "Daisy Duck", "Peter Pan", "Tinker Bell", "Captain Hook", "Wendy", "Pinocchio", "Jiminy Cricket", "Dumbo", "Bambi", "Thumper", "Alice", "Mad Hatter", "Cheshire Cat", "Queen of Hearts", "Sleeping Beauty", "Maleficent", "Prince Phillip", "Cruella de Vil", "Pongo", "Perdita", "Mowgli", "Baloo", "Bagheera", "Shere Khan", "King Louie", "Ariel", "Sebastian", "Flounder", "Ursula", "Prince Eric", "Belle", "Beast", "Gaston", "Lumiere", "Cogsworth", "Mrs. Potts", "Jasmine", "Genie", "Jafar", "Iago", "Mufasa", "Scar", "Nala", "Timon", "Pumbaa", "Pocahontas", "Meeko", "John Smith", "Quasimodo", "Esmeralda", "Hercules", "Megara", "Phil", "Hades", "Mulan", "Mushu", "Tarzan", "Jane", "Terk", "Lilo", "Stitch", "Nani", "Lightning McQueen", "Mater", "Remy", "Emile", "WALL-E", "EVE", "Carl Fredricksen", "Russell", "Dug", "Tiana", "Prince Naveen", "Rapunzel", "Flynn Rider", "Maximus", "Merida", "Anna", "Kristoff", "Sven", "Baymax", "Hiro", "Joy", "Sadness", "Anger", "Fear", "Disgust", "Moana", "Maui", "Mirabel", "Bruno", "Raya", "Sisu"] },
@@ -288,7 +288,6 @@ const categories = {
             "Card Games": { i: "🃏", w: ["Poker", "Solitaire", "Uno", "Bridge", "Go Fish", "Blackjack", "Rummy", "Gin Rummy", "Canasta", "Hearts", "Spades", "Euchre", "Pinochle", "Cribbage", "Crazy Eights", "War", "Old Maid", "Snap", "Slapjack", "Speed", "Durak", "Belote", "Skat", "Tarot", "Baccarat", "Pai Gow", "Texas Hold'em", "Omaha Hold'em", "Seven-Card Stud", "Five-Card Draw", "Video Poker", "President", "Big Two", "Contract Bridge", "Whist", "Solo Whist", "Preference", "Tressette", "Briscola", "Scopa", "Mau-Mau", "Phase 10", "Skip-Bo", "Exploding Kittens", "Magic The Gathering", "Yu-Gi-Oh!", "Pokémon TCG", "Hearthstone", "Gwent", "Artifact", "Marvel Snap", "KeyForge", "Netrunner", "Dominion", "Star Realms", "Legendary", "Ascension", "Splendor", "7 Wonders Duel", "Hanabi", "The Crew", "6 Nimmt!", "Tichu", "Haggis", "Chimera", "Zoff im Zoo", "Lords of Scotland", "Love Letter", "Coup", "The Resistance", "Avalon", "Secret Hitler", "One Night Ultimate Werewolf", "Citadels", "Munchkin", "Fluxx", "Killer Bunnies", "Sentinels of the Multiverse", "Arkham Horror LCG", "Lord of the Rings LCG", "Marvel Champions", "Dutch Blitz", "Ligretto", "Spot It!", "Dobble", "Set", "Taboo", "Cards Against Humanity", "What Do You Meme?", "Apples to Apples", "Dixit", "Mysterium", "Codenames", "Decrypto", "Sushi Go!", "Exploding Kittens", "Unstable Unicorns", "Here to Slay"] }
         };
 
-        // --- GAME LOGIC ---
         const game = {
             score: 0,
             timeLeft: 60,
@@ -377,7 +376,6 @@ const categories = {
             }
         };
 
-        // Arrow Key Support
         window.addEventListener('keydown', (e) => {
             if(document.getElementById('game-screen').classList.contains('active')) {
                 if(e.key === "ArrowRight") game.handleAction(true);
